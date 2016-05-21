@@ -94,15 +94,16 @@ trait Formats
   }
 
   implicit lazy val ipAddressFormat: Format[mesos.NetworkInfo.IPAddress] = {
-    def toIpAddress(ipAddress: String, protocol: mesos.NetworkInfo.Protocol): mesos.NetworkInfo.IPAddress =
-      mesos.NetworkInfo.IPAddress.newBuilder().setIpAddress(ipAddress).setProtocol(protocol).build()
+    def toIpAddress(ipAddress: String, protocol: mesos.NetworkInfo.Protocol, string: mesos.NetworkInfo.name): mesos.NetworkInfo.IPAddress =
+      mesos.NetworkInfo.IPAddress.newBuilder().setIpAddress(ipAddress).setProtocol(protocol).setName(name).build()
 
     def toTuple(ipAddress: mesos.NetworkInfo.IPAddress): (String, mesos.NetworkInfo.Protocol) =
-      (ipAddress.getIpAddress, ipAddress.getProtocol)
+      (ipAddress.getIpAddress, ipAddress.getProtocol, ipAddress.getName)
 
     (
       (__ \ "ipAddress").format[String] ~
-      (__ \ "protocol").format[mesos.NetworkInfo.Protocol]
+      (__ \ "protocol").format[mesos.NetworkInfo.Protocol] ~
+      (__ \ "name").format[String]
     )(toIpAddress, toTuple)
   }
 
@@ -317,10 +318,10 @@ trait IpAddressFormats {
 
   implicit lazy val IpAddressFormat: Format[IpAddress] = (
     (__ \ "groups").formatNullable[Seq[String]].withDefault(Nil) ~
-    (__ \ "name").formatNullable[String] ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty[String, String]) ~
-    (__ \ "discovery").formatNullable[DiscoveryInfo].withDefault(DiscoveryInfo.empty)
-  )(IpAddress(_, _, _), unlift(IpAddress.unapply))
+    (__ \ "discovery").formatNullable[DiscoveryInfo].withDefault(DiscoveryInfo.empty) ~
+    (__ \ "name").formatNullable[String]
+  )(IpAddress(_, _, _, _), unlift(IpAddress.unapply))
 }
 
 trait DeploymentFormats {
